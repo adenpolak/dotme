@@ -14,6 +14,14 @@
     "cursor"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adenpolak1-blip/dotme.git"
+  },
+  "homepage": "https://github.com/adenpolak1-blip/dotme#readme",
+  "bugs": {
+    "url": "https://github.com/adenpolak1-blip/dotme/issues"
+  },
   "type": "module",
   "bin": {
     "dotme": "dist/cli/index.js"

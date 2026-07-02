@@ -1,21 +1,16 @@
 # dotme
 
+```bash
+npx dotme-ai init          # describe yourself once (~3 min, every question skippable)
+npx dotme-ai connect all   # hook up Claude Desktop, Claude Code, and Cursor
+# done — restart your AI tools and ask one: "what do you know about me?"
+```
+
 **Set up once. Every AI knows you.**
 
 Every AI tool you use — Claude, Claude Code, Cursor, ChatGPT — has amnesia about *you*. You've explained who you are, what you're building, and how you like answers formatted hundreds of times, and you'll do it again tomorrow. dotme fixes this with one folder, `~/.me`, that you own: plain markdown files describing you, served to every AI tool through a single local server.
 
-> **npm note:** the package is `dotme-ai` (the name `dotme` was taken), but the command is still `dotme`.
-
-## 60-second install
-
-```bash
-npx dotme-ai init          # answer a few questions (all skippable, ~3 min)
-npx dotme-ai connect all   # hooks up Claude Desktop, Claude Code, and Cursor
-```
-
-Done. Restart your AI tools and ask one of them *"what do you know about me?"* — it will answer from your `~/.me`.
-
-(If you prefer a permanent install: `npm install -g dotme-ai`, then use `dotme` directly.)
+> **npm note:** the package is `dotme-ai` (the name `dotme` was taken), but the command is still `dotme`. Prefer a permanent install? `npm install -g dotme-ai`, then use `dotme` directly.
 
 ## What's in ~/.me
 
@@ -114,7 +109,7 @@ Any tool that speaks MCP can connect using the manual config above. For tools wi
 ## Development
 
 ```bash
-git clone https://github.com/YOURNAME/dotme && cd dotme
+git clone https://github.com/adenpolak1-blip/dotme && cd dotme
 npm install && npm run build
 node dist/cli/index.js --help
 ```
