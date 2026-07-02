@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "created": "2026-05-01T17:04:00.000Z",
+  "permissions": {
+    "profile.md": true,
+    "projects.md": true,
+    "stack.md": true,
+    "preferences.md": true,
+    "memory.md": true,
+    "private.md": false
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "dotme-ai",
+  "version": "0.1.0",
+  "description": "Your personal context layer for AI tools. One ~/.me folder you own, served to every AI through a local MCP server.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "context",
+    "memory",
+    "personal",
+    "dotfiles",
+    "claude",
+    "cursor"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "dotme": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.8.0"
+  }
+}
