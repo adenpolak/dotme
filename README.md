@@ -103,6 +103,41 @@ Run `dotme connect manual` for a snippet with your machine's real paths filled i
 
 The top-level key varies by client (`mcpServers` for most, `servers` in VS Code, `context_servers` in Zed); TOML-based clients like Codex CLI use `[mcp_servers.dotme]`.
 
+## Sync between machines
+
+`~/.me` is just a folder, so syncing it is whatever you already trust: git, iCloud Drive, Dropbox, or Syncthing. Git is the nicest because it gives you the same audit trail you already get from `.changelog`, plus history and rollback.
+
+**On your first machine — put `~/.me` under git and push it:**
+
+```bash
+cd ~/.me
+git init && git branch -M main
+printf 'private.md\n.changelog\n' > .gitignore   # keep secrets + local log off the remote
+git add -A && git commit -m "my ~/.me"
+git remote add origin <your-private-repo-url>     # a PRIVATE repo
+git push -u origin main
+```
+
+(`dotme init` can do the `git init` + `.gitignore` for you if you answer yes to the git prompt.)
+
+**On your second machine — clone it into place, and dotme just works:**
+
+```bash
+git clone <your-private-repo-url> ~/.me
+dotme connect all      # hook up that machine's AI tools
+```
+
+There's no second `dotme init` — dotme sees the cloned `manifest.json` and treats the folder as already set up (this is the fix in 0.2.1 that also makes a symlinked `~/.me` work). If `~/.me` is a symlink to a Dropbox/iCloud folder, that works the same way.
+
+**Day to day:** `git -C ~/.me pull` to get changes, `git -C ~/.me commit -am … && git push` to send them.
+
+Two deliberate properties:
+
+- **`private.md` and `.changelog` never sync.** They're gitignored, so each machine keeps its own private notes and its own local audit log. Your secrets don't ride along to the remote.
+- **Use a private repo.** Your exposed context is still personal. dotme keeps it in files you control precisely so *you* decide where they go — don't push them somewhere public.
+
+> First-class built-in sync (no git required) is on the roadmap; today it's deliberately "bring your own sync" because a folder you own shouldn't need our servers.
+
 ## Why this should be a standard
 
 Developers solved this problem for machines decades ago: dotfiles. Your `.zshrc`, `.gitconfig`, and `.vimrc` mean any new machine can be *yours* in minutes — because your configuration lives in files you own, not inside any one program.
@@ -126,7 +161,7 @@ Every write goes through the changelog with the tool's name and its stated reaso
 Any tool that speaks MCP over local stdio can connect — use `dotme connect manual` if it's not in the table. ChatGPT is the exception: its connectors only accept remote servers, and dotme deliberately has zero network code, so there's no native hookup. `dotme show profile` pastes cleanly.
 
 **Several machines?**
-`~/.me` is just a folder — sync it with git, iCloud, Dropbox, or Syncthing. (First-class sync is on the roadmap.)
+`~/.me` is just a folder — sync it with git, iCloud, Dropbox, or Syncthing. See [Sync between machines](#sync-between-machines) for the exact git commands; `private.md` and `.changelog` stay local. (First-class sync is on the roadmap.)
 
 **Roadmap:** permissions UI · sync across machines · remote-server bridge (for ChatGPT-style clients).
 
