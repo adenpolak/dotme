@@ -13,14 +13,17 @@ import {
 } from "../core/me.js";
 import { bold, dim, info, warn } from "./ui.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 const HELP = `${bold("dotme")} — your personal context layer for AI tools
 
 Usage:
   dotme init [--sample] [--force]   Create ~/.me (interactive wizard, ~3 min)
   dotme connect <tool>              Hook dotme into an AI tool
-                                    (claude-desktop | claude-code | cursor | all)
+                                    (claude-desktop | claude-code | cursor | windsurf |
+                                     zed | vscode | codex | gemini | openclaw | all)
+  dotme connect all                 Auto-detect installed tools and configure them
+  dotme connect manual              Paste-ready config for any other MCP client
   dotme status                      Files, sizes, exposure, recent changes
   dotme show <section>              Print one section (e.g. dotme show profile)
   dotme changelog [-n N]            Audit log of every write (default last 20)
