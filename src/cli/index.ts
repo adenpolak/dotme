@@ -4,6 +4,7 @@
 import { connect } from "./connect.js";
 import { init } from "./init.js";
 import {
+  VERSION,
   listSections,
   meDir,
   meExists,
@@ -12,8 +13,6 @@ import {
   resolveSection,
 } from "../core/me.js";
 import { bold, dim, info, warn } from "./ui.js";
-
-const VERSION = "0.2.0";
 
 const HELP = `${bold("dotme")} — your personal context layer for AI tools
 

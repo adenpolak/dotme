@@ -7,8 +7,17 @@
  */
 
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
+
+/**
+ * The package version, read once from package.json so the CLI and MCP server
+ * never drift out of sync with what npm actually published.
+ */
+export const VERSION: string = (
+  createRequire(import.meta.url)("../../package.json") as { version: string }
+).version;
 
 /** The canonical section files of a ~/.me directory. */
 export const SECTION_FILES = [
@@ -48,6 +57,17 @@ export function meDir(): string {
 
 export function meExists(): boolean {
   return fs.existsSync(meDir());
+}
+
+/**
+ * Has a dotme setup actually been created here? Presence of manifest.json is
+ * the marker `init` writes. This is deliberately stricter than meExists():
+ * `~/.me` may be an *empty* directory — common when it's a symlink to a fresh
+ * sync folder (Dropbox, iCloud, a git clone) — and that should be initializable,
+ * not refused as "already exists".
+ */
+export function meInitialized(): boolean {
+  return fs.existsSync(path.join(meDir(), MANIFEST_FILE));
 }
 
 /** Message shown by every tool when ~/.me has not been set up yet. */

@@ -12,6 +12,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import {
   NOT_INITIALIZED_MESSAGE,
+  VERSION,
   appendMemory,
   exposedFiles,
   listSections,
@@ -24,7 +25,7 @@ import {
   type SectionFile,
 } from "../core/me.js";
 
-const server = new McpServer({ name: "dotme", version: "0.1.0" });
+const server = new McpServer({ name: "dotme", version: VERSION });
 
 /** Identify the connected client for the changelog, e.g. "mcp:claude-code". */
 function changelogSource(): string {

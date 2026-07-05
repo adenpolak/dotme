@@ -4,6 +4,27 @@ All notable changes to dotme are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and dotme adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-07-05
+
+### Fixed
+- **Symlinked `~/.me` can now be initialized.** `init` treated an existing
+  empty directory as "already set up" and refused — which broke the common
+  sync setup where `~/.me` is a symlink to a Dropbox/iCloud/git folder. The
+  "already set up" check is now keyed on `manifest.json` (the marker `init`
+  writes), so an empty synced folder initializes cleanly while a folder that
+  already holds a real dotme is still protected without `--force`.
+- **The MCP server now reports the real package version** in its handshake
+  instead of a hardcoded `0.1.0`. CLI and server both read the version from
+  `package.json`, so they can't drift again.
+- Copy fix: `init`'s closing hint said "Claude Desktop, Claude Code, and
+  Cursor"; it now points at `connect all`'s auto-detection of all nine tools.
+
+### Added
+- Dependency-free regression tests (`npm test`, via `node --test`) locking in
+  the security promises: private.md is never exposed by any path or under a
+  corrupt manifest, section names can't traverse out of `~/.me`, and
+  memory.md stays append-only.
+
 ## [0.2.0] — 2026-07-05
 
 ### Added

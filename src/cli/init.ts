@@ -9,7 +9,7 @@ import {
   appendChangelog,
   defaultPermissions,
   meDir,
-  meExists,
+  meInitialized,
   saveManifest,
 } from "../core/me.js";
 import {
@@ -86,8 +86,8 @@ export async function init(args: string[]): Promise<void> {
   const force = args.includes("--force");
   const dir = meDir();
 
-  if (meExists() && !force) {
-    warn(`${dir} already exists. Use \`dotme init --force\` to overwrite it, or edit the files directly.`);
+  if (meInitialized() && !force) {
+    warn(`${dir} is already set up. Use \`dotme init --force\` to overwrite it, or edit the files directly.`);
     process.exitCode = 1;
     return;
   }
@@ -133,5 +133,5 @@ export async function init(args: string[]): Promise<void> {
   for (const name of Object.keys(files)) info(`${name}${name === "private.md" ? dim("  (never exposed by default)") : ""}`);
   info(`manifest.json  ${dim("(permissions map)")}`);
   info(`${CHANGELOG_FILE}     ${dim("(audit log of every AI write)")}`);
-  console.log(`\nNext: ${bold("dotme connect all")} to hook up Claude Desktop, Claude Code, and Cursor.`);
+  console.log(`\nNext: ${bold("dotme connect all")} — auto-detects your installed AI tools and hooks up each one.`);
 }
