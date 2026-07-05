@@ -44,13 +44,50 @@ export const TOOLS = [
 ] as const;
 export type Tool = (typeof TOOLS)[number];
 
+/** True if a path lives inside npx's throwaway package cache. */
+function isEphemeralInstall(p: string): boolean {
+  return p.includes(`${path.sep}_npx${path.sep}`);
+}
+
+/** Path to a globally-installed dotme-ai server entry, if one exists. */
+function globalServerPath(): string | null {
+  try {
+    const root = execFileSync("npm", ["root", "-g"], {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    if (!root) return null;
+    const candidate = path.join(root, "dotme-ai", "dist", "server", "index.js");
+    return fs.existsSync(candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve the server entry to write into client configs, preferring a location
+ * that will still exist tomorrow. Running via `npx dotme-ai connect` lands us
+ * in an `_npx` cache dir that npm garbage-collects — baking that path into a
+ * client config is a silent time bomb. So if we're ephemeral, we fall back to a
+ * durable global install when one is present, and otherwise flag it so the
+ * caller can warn.
+ */
+function resolveServerPath(): { path: string; ephemeral: boolean } {
+  const local = fileURLToPath(new URL("../server/index.js", import.meta.url));
+  if (!isEphemeralInstall(local)) return { path: local, ephemeral: false };
+  const global = globalServerPath();
+  if (global) return { path: global, ephemeral: false };
+  return { path: local, ephemeral: true };
+}
+
 /**
  * The stdio command clients should run. We point at the built server entry
- * inside this installed package with the current node binary — works for
- * local checkouts and global installs alike.
+ * with the current node binary — works for local checkouts and global installs
+ * alike, and avoids ephemeral npx paths where possible (see resolveServerPath).
  */
 function serverCommand(): { command: string; args: string[] } {
-  const serverPath = fileURLToPath(new URL("../server/index.js", import.meta.url));
+  const { path: serverPath } = resolveServerPath();
   // process.execPath on Homebrew resolves into a versioned Cellar directory
   // that dies on the next `brew upgrade node`; prefer the stable symlink.
   let command = process.execPath;
@@ -63,6 +100,22 @@ function serverCommand(): { command: string; args: string[] } {
     }
   }
   return { command, args: [serverPath] };
+}
+
+/**
+ * Warn once, up front, if we're about to write configs that point at an
+ * ephemeral npx cache. Everything still works today; this tells the user how to
+ * make it permanent before npm cleans the cache out from under them.
+ */
+function warnIfEphemeral(): void {
+  if (resolveServerPath().ephemeral) {
+    warn(
+      "You're running dotme via npx, so this points clients at a temporary cache " +
+        "that npm may later delete. It works now, but for a durable setup run:",
+    );
+    console.log(`  ${bold("npm install -g dotme-ai")}  &&  ${bold("dotme connect all")}`);
+    console.log();
+  }
 }
 
 /** Back up a config file next to itself; returns the backup path. */
@@ -381,6 +434,7 @@ const REGISTRY: Record<Tool, ToolDef> = {
 
 /** `connect all`: configure every tool detected on this machine. */
 function connectAll(): void {
+  warnIfEphemeral();
   const found: Tool[] = [];
   const skipped: string[] = [];
   for (const t of TOOLS) {
@@ -406,6 +460,7 @@ function connectAll(): void {
 
 /** `connect manual`: catch-all snippet for any current or future MCP client. */
 function connectManual(): void {
+  warnIfEphemeral();
   const { command, args } = serverCommand();
   console.log(`${bold("dotme works with any MCP client.")} Point it at this local stdio command:
 
@@ -448,5 +503,6 @@ export function connect(args: string[]): void {
     process.exitCode = 1;
     return;
   }
+  warnIfEphemeral();
   REGISTRY[target as Tool].connect();
 }

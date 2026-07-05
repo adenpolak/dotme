@@ -4,6 +4,17 @@ All notable changes to dotme are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and dotme adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] — 2026-07-05
+
+### Fixed
+- **`connect` no longer bakes an ephemeral npx path into client configs.**
+  Running the documented quick start (`npx dotme-ai connect all`) used to point
+  every tool at dotme's temporary `_npx` cache directory, which npm garbage-
+  collects — so connections would silently break weeks later. `connect` now
+  prefers a durable global install when one exists, and when it can't find one
+  it warns clearly and tells you to `npm install -g dotme-ai` for a permanent
+  setup (the connection still works immediately in the meantime).
+
 ## [0.2.1] — 2026-07-05
 
 ### Fixed
