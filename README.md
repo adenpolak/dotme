@@ -127,7 +127,7 @@ Any tool that speaks MCP over local stdio can connect — use `dotme connect man
 ## Development
 
 ```bash
-git clone https://github.com/adenpolak1-blip/dotme && cd dotme
+git clone https://github.com/adenpolak/dotme && cd dotme
 npm install && npm run build
 node dist/cli/index.js --help
 ```

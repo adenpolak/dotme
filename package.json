@@ -16,11 +16,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adenpolak1-blip/dotme.git"
+    "url": "git+https://github.com/adenpolak/dotme.git"
   },
-  "homepage": "https://github.com/adenpolak1-blip/dotme#readme",
+  "homepage": "https://github.com/adenpolak/dotme#readme",
   "bugs": {
-    "url": "https://github.com/adenpolak1-blip/dotme/issues"
+    "url": "https://github.com/adenpolak/dotme/issues"
   },
   "type": "module",
   "bin": {
