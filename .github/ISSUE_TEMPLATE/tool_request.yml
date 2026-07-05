@@ -1,0 +1,43 @@
+name: Tool support request
+description: Ask for a new AI tool to be supported by `dotme connect`.
+labels: ["tool-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        dotme works with **any** MCP client today via `dotme connect manual` —
+        this request is for adding it to `connect` by name (with backups + merge).
+        A link to the tool's official MCP docs is the single most useful thing you
+        can include.
+  - type: input
+    id: tool-name
+    attributes:
+      label: Tool name
+      placeholder: "e.g. Cline, Continue, Goose"
+    validations:
+      required: true
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Does it support local stdio MCP servers?
+      description: dotme is a local stdio server. Remote-only clients (like ChatGPT's connectors) can't connect natively.
+      options:
+        - "Yes — local stdio"
+        - "No — remote/HTTP only"
+        - "Not sure"
+    validations:
+      required: true
+  - type: input
+    id: docs
+    attributes:
+      label: Link to its official MCP config docs
+      description: Where it documents adding a custom/local MCP server, and the config file path.
+      placeholder: "https://…"
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config file path + format (if you know it)
+      description: e.g. "~/.foo/mcp.json, servers keyed under mcpServers".
+      render: shell

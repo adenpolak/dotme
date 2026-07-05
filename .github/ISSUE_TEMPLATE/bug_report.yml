@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in dotme (CLI, MCP server, or connect) doesn't work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make dotme solid. Please don't paste the contents of your
+        `~/.me` files — a redacted snippet or the shape of the problem is plenty.
+  - type: input
+    id: version
+    attributes:
+      label: dotme version
+      description: Output of `npx dotme-ai@latest --version` (or your installed version).
+      placeholder: "0.2.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did it happen?
+      options:
+        - "CLI (init / status / show / changelog)"
+        - "connect (a specific tool)"
+        - "MCP server (a tool call from a client)"
+        - "Other / not sure"
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Which AI tool / client (if relevant)?
+      placeholder: "Claude Code, Cursor, VS Code, Zed, …"
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened vs. what you expected
+      description: Include the exact command you ran and the output (redact anything personal).
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and Node version
+      placeholder: "macOS 15.5, Node 20.11"
+    validations:
+      required: true

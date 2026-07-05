@@ -1,10 +1,16 @@
 # dotme
 
+[![npm version](https://img.shields.io/npm/v/dotme-ai.svg)](https://www.npmjs.com/package/dotme-ai)
+[![license: MIT](https://img.shields.io/npm/l/dotme-ai.svg)](https://github.com/adenpolak/dotme/blob/main/LICENSE)
+[![node: >=20](https://img.shields.io/node/v/dotme-ai.svg)](https://nodejs.org)
+
 ```bash
 npx dotme-ai init          # describe yourself once (~3 min, every question skippable)
 npx dotme-ai connect all   # auto-detects your AI tools and hooks up every one
 # done — restart your AI tools and ask one: "what do you know about me?"
 ```
+
+![dotme in action: describe yourself once, then connect every AI tool on your machine in one command](https://raw.githubusercontent.com/adenpolak/dotme/main/demo/demo.gif)
 
 **Set up once. Every AI knows you.**
 
