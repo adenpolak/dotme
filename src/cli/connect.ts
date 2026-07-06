@@ -391,17 +391,28 @@ function connectOpenClaw(): void {
   }
 }
 
-/** ChatGPT gets an honest explanation, not a fake integration. */
+/** ChatGPT gets an honest explanation plus the recommended workaround. */
 function explainChatGPT(): void {
-  warn("ChatGPT can't connect to dotme directly.");
+  warn("ChatGPT can't connect to dotme's local server directly.");
   console.log(
-    `  ChatGPT's developer-mode MCP connectors only accept ${bold("remote")} servers\n` +
-      "  (SSE / streaming HTTP over HTTPS) — it cannot launch local stdio servers.\n" +
-      "  dotme is local-only by design (zero network code), so there is nothing\n" +
-      "  honest to configure here. Your options:\n" +
-      `    · paste context in manually — ${bold("dotme show profile")} is made for it\n` +
-      "    · bridge dotme yourself with a tool like mcp-remote plus a tunnel\n" +
-      "      (this puts your context on the network — read the security notes first)",
+    "  ChatGPT's connectors only accept " + bold("remote") + " MCP servers (SSE / streamable\n" +
+      "  HTTP over HTTPS); dotme is a local stdio server with zero network code, so\n" +
+      "  there's no honest native integration.\n",
+  );
+  console.log(bold("  Recommended: paste your context in instead — one command:"));
+  console.log(`    ${bold("dotme export --copy")}    ${dim("# copies your exposed context to the clipboard")}`);
+  console.log(
+    "    Paste it into any ChatGPT chat. Add " + bold("--compact") + " to save tokens.\n" +
+      "    Nothing leaves your machine except what you paste. This is the safe path.\n",
+  );
+  console.log(dim("  Advanced (at your own risk): bridge the local server to a public URL."));
+  console.log(
+    dim("    supergateway can wrap dotme's stdio server as HTTP, and a tunnel (ngrok /\n") +
+      dim("    Cloudflare, or OpenAI's Secure MCP Tunnel) exposes it to ChatGPT:\n") +
+      dim(`      npx -y supergateway --stdio "dotme serve" --outputTransport streamableHttp --port 8000\n`) +
+      dim("    Caveat: this publishes your personal context to the internet through a tunnel,\n") +
+      dim("    and dotme has no auth — anyone with the URL can read it. It also breaks the\n") +
+      dim("    local-only guarantee for that session. Only do this if you understand that."),
   );
 }
 

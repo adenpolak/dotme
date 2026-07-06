@@ -69,7 +69,7 @@ Each exposed file is also available as a browsable MCP resource (`me://profile`,
 | Codex CLI | ✅ | `codex mcp add`, or `[mcp_servers.dotme]` in `~/.codex/config.toml` |
 | Gemini CLI | ✅ | `~/.gemini/settings.json` → `mcpServers` |
 | OpenClaw | ✅ | `openclaw mcp add`, or `mcp.servers` in `~/.openclaw/openclaw.json` |
-| ChatGPT Desktop | ❌ | Developer-mode connectors are **remote-only** (SSE/HTTP) — no local stdio servers. `dotme connect chatgpt` explains your options. |
+| ChatGPT | ⚠️ paste | Connectors are **remote-only** (SSE/HTTP) — can't launch a local stdio server. Use `dotme export --copy` and paste (see [ChatGPT & no-MCP tools](#chatgpt--tools-without-mcp)). |
 | Anything else that speaks MCP | ✅ | `dotme connect manual` prints a paste-ready snippet |
 
 Two safety rules apply to every integration: an existing config file is **always backed up** next to itself first (e.g. `mcp.json.backup-2026-07-05T19-14-05`), and other servers already in the file are **merged around, never overwritten**. If a config can't be safely rewritten (e.g. Zed settings with comments), dotme refuses and prints the exact snippet to paste instead.
@@ -83,9 +83,25 @@ dotme connect all         #   auto-detect installed tools and configure them
 dotme connect manual      #   paste-ready config for any other MCP client
 dotme status              # files, sizes, exposure, recent changes
 dotme show <section>      # print one section
+dotme export [section...] # print exposed context as one paste-ready block
+                          #   --copy to clipboard, --compact to save tokens
 dotme changelog           # audit log (last 20; -n 100 or --all for more)
 dotme serve               # run the MCP server (your AI tools call this)
 ```
+
+### ChatGPT & tools without MCP
+
+Some tools can't run a local MCP server — ChatGPT's connectors are remote-only, and web chats have no MCP at all. For those, skip the server and just paste your context:
+
+```bash
+dotme export --copy            # copies your exposed context to the clipboard
+dotme export --copy --compact  # same, but strips headers/blank lines to save tokens
+dotme export profile stack     # only specific sections
+```
+
+`export` follows the exact same rules as the server: `private.md` is never included. Paste the block into ChatGPT, Gemini web, or anywhere else and it's treated as ground truth about you.
+
+> **Advanced (at your own risk):** you *can* bridge dotme to ChatGPT's remote connectors by wrapping the stdio server as HTTP with [supergateway](https://github.com/supercorp-ai/supergateway) and exposing it through a tunnel (ngrok / Cloudflare / OpenAI's Secure MCP Tunnel). But that publishes your personal context to the internet, and dotme has no auth — anyone with the URL can read it. `export` is the recommended path; only bridge if you fully understand the tradeoff. Run `dotme connect chatgpt` for the exact command.
 
 ### Connecting a tool manually
 
@@ -159,7 +175,7 @@ Put it in `private.md` (never exposed by default), or flip any file's flag to `f
 Every write goes through the changelog with the tool's name and its stated reason. Make `~/.me` a git repo (init offers this) and you can diff and revert anything.
 
 **What about ChatGPT and other tools?**
-Any tool that speaks MCP over local stdio can connect — use `dotme connect manual` if it's not in the table. ChatGPT is the exception: its connectors only accept remote servers, and dotme deliberately has zero network code, so there's no native hookup. `dotme show profile` pastes cleanly.
+Any tool that speaks MCP over local stdio can connect — use `dotme connect manual` if it's not in the table. ChatGPT is the exception: its connectors only accept remote servers, so there's no native hookup. Use `dotme export --copy` and paste — see [ChatGPT & tools without MCP](#chatgpt--tools-without-mcp).
 
 **Several machines?**
 `~/.me` is just a folder — sync it with git, iCloud, Dropbox, or Syncthing. See [Sync between machines](#sync-between-machines) for the exact git commands; `private.md` and `.changelog` stay local. (First-class sync is on the roadmap.)

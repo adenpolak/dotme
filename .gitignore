@@ -3,5 +3,7 @@ dist/
 *.log
 .DS_Store
 
-# Personal launch notes — never commit.
+# Personal launch notes + metrics — never commit.
 LAUNCH.md
+FEEDBACK.md
+METRICS.md
