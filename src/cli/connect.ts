@@ -131,6 +131,50 @@ function home(...segments: string[]): string {
   return path.join(os.homedir(), ...segments);
 }
 
+/** Windows %APPDATA% (Roaming), with a sane fallback. */
+function winAppData(): string {
+  return process.env.APPDATA ?? home("AppData", "Roaming");
+}
+
+/* ------------------------------------------------------------------ */
+/* Per-OS config locations (verified against each tool's docs, 2026)    */
+/*                                                                      */
+/* CLI tools (Claude Code, Codex, Gemini, OpenClaw) and the editors     */
+/* that key off the home dir (Cursor ~/.cursor, Windsurf ~/.codeium)    */
+/* are already cross-platform via os.homedir(). Only the GUI apps that  */
+/* use an OS-specific application-data directory need per-OS handling.   */
+/* ------------------------------------------------------------------ */
+
+/** Claude Desktop config path, or null on Linux (no Linux build exists). */
+export function claudeDesktopConfig(): string | null {
+  if (process.platform === "darwin") {
+    return home("Library", "Application Support", "Claude", "claude_desktop_config.json");
+  }
+  if (process.platform === "win32") {
+    return path.join(winAppData(), "Claude", "claude_desktop_config.json");
+  }
+  return null;
+}
+
+/** VS Code user-level MCP config path (mcp.json) for the current OS. */
+export function vscodeConfig(): string {
+  if (process.platform === "darwin") {
+    return home("Library", "Application Support", "Code", "User", "mcp.json");
+  }
+  if (process.platform === "win32") {
+    return path.join(winAppData(), "Code", "User", "mcp.json");
+  }
+  return home(".config", "Code", "User", "mcp.json");
+}
+
+/** Zed settings.json path for the current OS (mac/Linux use ~/.config/zed). */
+export function zedConfig(): string {
+  if (process.platform === "win32") {
+    return path.join(winAppData(), "Zed", "settings.json");
+  }
+  return home(".config", "zed", "settings.json");
+}
+
 /** True if `bin` is executable somewhere on PATH. */
 function commandExists(bin: string): boolean {
   const exts = process.platform === "win32" ? [".exe", ".cmd", ".bat", ""] : [""];
@@ -200,13 +244,14 @@ function mergeJsonConfig(
 /* ------------------------------------------------------------------ */
 
 function connectClaudeDesktop(): void {
-  if (process.platform !== "darwin") {
+  const file = claudeDesktopConfig();
+  if (!file) {
     warn(
-      "Claude Desktop auto-connect currently supports macOS only. Add dotme to claude_desktop_config.json manually — see the README.",
+      "Claude Desktop isn't available on Linux (it ships for macOS and Windows only). " +
+        "Use Claude Code, or `dotme connect manual` for another client.",
     );
     return;
   }
-  const file = home("Library", "Application Support", "Claude", "claude_desktop_config.json");
   const { command, args } = serverCommand();
   if (mergeJsonConfig(file, ["mcpServers"], { command, args }, "Claude Desktop")) {
     info("Claude Desktop: restart the app to pick up the new server.");
@@ -252,7 +297,7 @@ function connectWindsurf(): void {
 }
 
 function connectZed(): void {
-  const file = home(".config", "zed", "settings.json");
+  const file = zedConfig();
   const { command, args } = serverCommand();
   const entry = { source: "custom", command, args, env: {} };
   if (mergeJsonConfig(file, ["context_servers"], entry, "Zed")) {
@@ -261,12 +306,7 @@ function connectZed(): void {
 }
 
 function connectVSCode(): void {
-  const file =
-    process.platform === "darwin"
-      ? home("Library", "Application Support", "Code", "User", "mcp.json")
-      : process.platform === "win32"
-        ? path.join(process.env.APPDATA ?? home("AppData", "Roaming"), "Code", "User", "mcp.json")
-        : home(".config", "Code", "User", "mcp.json");
+  const file = vscodeConfig();
   const { command, args } = serverCommand();
   if (mergeJsonConfig(file, ["servers"], { type: "stdio", command, args }, "VS Code")) {
     info('VS Code: run "MCP: List Servers" and start dotme, or just reload the window.');
@@ -378,9 +418,13 @@ interface ToolDef {
 const REGISTRY: Record<Tool, ToolDef> = {
   "claude-desktop": {
     label: "Claude Desktop",
-    detect: () =>
-      fs.existsSync(home("Library", "Application Support", "Claude")) ||
-      fs.existsSync("/Applications/Claude.app"),
+    detect: () => {
+      const cfg = claudeDesktopConfig();
+      return (
+        (cfg !== null && fs.existsSync(path.dirname(cfg))) ||
+        fs.existsSync("/Applications/Claude.app")
+      );
+    },
     connect: connectClaudeDesktop,
   },
   "claude-code": {
@@ -402,7 +446,7 @@ const REGISTRY: Record<Tool, ToolDef> = {
   zed: {
     label: "Zed",
     detect: () =>
-      fs.existsSync(home(".config", "zed")) ||
+      fs.existsSync(path.dirname(zedConfig())) ||
       fs.existsSync("/Applications/Zed.app") ||
       commandExists("zed"),
     connect: connectZed,
@@ -410,8 +454,7 @@ const REGISTRY: Record<Tool, ToolDef> = {
   vscode: {
     label: "VS Code",
     detect: () =>
-      fs.existsSync(home("Library", "Application Support", "Code")) ||
-      fs.existsSync(home(".config", "Code")) ||
+      fs.existsSync(path.dirname(path.dirname(vscodeConfig()))) ||
       commandExists("code"),
     connect: connectVSCode,
   },

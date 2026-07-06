@@ -266,3 +266,72 @@ export function searchContext(query: string, maxHits = 20): SearchHit[] {
   scored.sort((a, b) => b.score - a.score || a.line - b.line);
   return scored.slice(0, maxHits).map(({ score: _score, ...hit }) => hit);
 }
+
+/** The preamble prepended to an exported context block. */
+export const EXPORT_PREAMBLE =
+  "This is my personal context. Treat it as ground truth about me — my identity, " +
+  "projects, stack, and preferences — and prefer it over assumptions or generic defaults.";
+
+export interface ExportResult {
+  /** The full markdown block to paste, including the preamble. */
+  text: string;
+  /** Exposed sections that were included. */
+  files: SectionFile[];
+  /** Requested section names that don't exist (for a friendly warning). */
+  unknown: string[];
+  /** Requested sections that exist but aren't exposed (e.g. private). */
+  excluded: SectionFile[];
+}
+
+/**
+ * Build a single markdown block of the user's exposed context, for pasting into
+ * tools with no MCP support. Follows the exact same exposure rules as the
+ * server: private.md (and anything the manifest doesn't expose) is never
+ * included, no matter what sections are requested.
+ *
+ * @param sections  Optional subset of section names to include; omit for all exposed.
+ * @param compact   Strip markdown headers and blank lines for token economy.
+ */
+export function exportContext(
+  sections?: string[],
+  compact = false,
+): ExportResult {
+  let files = exposedFiles();
+  const unknown: string[] = [];
+  const excluded: SectionFile[] = [];
+
+  if (sections && sections.length > 0) {
+    const wanted: SectionFile[] = [];
+    for (const name of sections) {
+      const file = resolveSection(name);
+      if (!file) {
+        unknown.push(name);
+      } else if (files.includes(file)) {
+        if (!wanted.includes(file)) wanted.push(file);
+      } else {
+        // Resolves to a real section but isn't exposed (private, or turned off,
+        // or missing on disk) — never leak it, just report it was skipped.
+        if (!excluded.includes(file)) excluded.push(file);
+      }
+    }
+    files = files.filter((f) => wanted.includes(f));
+  }
+
+  const rendered = files
+    .map((f) => {
+      let content = (readSection(f) ?? "").trim();
+      if (compact) {
+        content = content
+          .split("\n")
+          .map((l) => l.replace(/\s+$/, ""))
+          .filter((l) => l.trim().length > 0 && !/^#{1,6}\s/.test(l))
+          .join("\n");
+      }
+      return content;
+    })
+    .filter((c) => c.length > 0);
+
+  const body = rendered.join(compact ? "\n" : "\n\n");
+  const text = body.length > 0 ? `${EXPORT_PREAMBLE}\n\n${body}` : EXPORT_PREAMBLE;
+  return { text, files, unknown, excluded };
+}

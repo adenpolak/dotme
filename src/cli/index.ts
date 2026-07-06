@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /** dotme CLI — your personal context layer for AI tools. */
 
+import { copyToClipboard, clipboardHint } from "./clipboard.js";
 import { connect } from "./connect.js";
 import { init } from "./init.js";
 import {
   VERSION,
+  exportContext,
   listSections,
   meDir,
   meExists,
@@ -12,7 +14,7 @@ import {
   readSection,
   resolveSection,
 } from "../core/me.js";
-import { bold, dim, info, warn } from "./ui.js";
+import { bold, dim, info, ok, warn } from "./ui.js";
 
 const HELP = `${bold("dotme")} — your personal context layer for AI tools
 
@@ -25,6 +27,8 @@ Usage:
   dotme connect manual              Paste-ready config for any other MCP client
   dotme status                      Files, sizes, exposure, recent changes
   dotme show <section>              Print one section (e.g. dotme show profile)
+  dotme export [section...]         Print exposed context as one paste-ready block
+                                    (--copy to clipboard, --compact to save tokens)
   dotme changelog [-n N]            Audit log of every write (default last 20)
   dotme serve                       Run the MCP server on stdio (used by AI tools)
   dotme help                        This help
@@ -77,6 +81,43 @@ function show(args: string[]): void {
   console.log(content.trimEnd());
 }
 
+function exportCmd(args: string[]): void {
+  if (!requireMe()) return;
+  const copy = args.includes("--copy");
+  const compact = args.includes("--compact");
+  const sections = args.filter((a) => !a.startsWith("--"));
+
+  const result = exportContext(sections.length > 0 ? sections : undefined, compact);
+
+  for (const name of result.unknown) {
+    warn(`No section "${name}" — skipping. Valid: profile, projects, stack, preferences, memory.`);
+  }
+  for (const file of result.excluded) {
+    warn(`"${file}" is not exposed (private or turned off in manifest.json) — excluded.`);
+  }
+  if (result.files.length === 0) {
+    warn("Nothing to export — no requested sections are exposed.");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (copy) {
+    const tool = copyToClipboard(result.text);
+    if (tool) {
+      const which = result.files.map((f) => f.replace(/\.md$/, "")).join(", ");
+      ok(`Copied your context (${which}) to the clipboard via ${tool}. Paste it into any AI tool.`);
+    } else {
+      // No clipboard tool — fall back to printing so the command still works.
+      warn(clipboardHint() + " Printing instead:");
+      console.log();
+      console.log(result.text);
+    }
+    return;
+  }
+
+  console.log(result.text);
+}
+
 function changelog(args: string[]): void {
   if (!requireMe()) return;
   const nFlag = args.indexOf("-n");
@@ -103,6 +144,9 @@ async function main(): Promise<void> {
       break;
     case "show":
       show(args);
+      break;
+    case "export":
+      exportCmd(args);
       break;
     case "changelog":
       changelog(args);

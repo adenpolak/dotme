@@ -1,6 +1,7 @@
 # dotme
 
 [![npm version](https://img.shields.io/npm/v/dotme-ai.svg)](https://www.npmjs.com/package/dotme-ai)
+[![CI](https://github.com/adenpolak/dotme/actions/workflows/ci.yml/badge.svg)](https://github.com/adenpolak/dotme/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/npm/l/dotme-ai.svg)](https://github.com/adenpolak/dotme/blob/main/LICENSE)
 [![node: >=20](https://img.shields.io/node/v/dotme-ai.svg)](https://nodejs.org)
 
