@@ -44,9 +44,14 @@ export const TOOLS = [
 ] as const;
 export type Tool = (typeof TOOLS)[number];
 
-/** True if a path lives inside npx's throwaway package cache. */
+/**
+ * True if a path lives inside npx's throwaway package cache. Matches the `_npx`
+ * segment with either separator so it's correct regardless of whether the path
+ * was captured on Windows (backslashes) or written with POSIX slashes — config
+ * files can contain either.
+ */
 export function isEphemeralInstall(p: string): boolean {
-  return p.includes(`${path.sep}_npx${path.sep}`);
+  return /[/\\]_npx[/\\]/.test(p);
 }
 
 /** Path to a globally-installed dotme-ai server entry, if one exists. */

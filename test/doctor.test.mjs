@@ -27,9 +27,14 @@ test("serverPathFromArgs picks the .js entry", () => {
   assert.equal(serverPathFromArgs("not-an-array"), null);
 });
 
-test("isEphemeralInstall flags npx cache paths only", () => {
+test("isEphemeralInstall flags npx cache paths only (any separator)", () => {
+  // POSIX-style npx cache path
   assert.equal(isEphemeralInstall("/Users/x/.npm/_npx/abc/node_modules/dotme-ai/dist/server/index.js"), true);
+  // Windows-style npx cache path (backslashes) — must also be detected
+  assert.equal(isEphemeralInstall("C:\\Users\\x\\AppData\\Roaming\\npm-cache\\_npx\\abc\\node_modules\\dotme-ai\\dist\\server\\index.js"), true);
+  // stable installs — never flagged
   assert.equal(isEphemeralInstall("/opt/homebrew/lib/node_modules/dotme-ai/dist/server/index.js"), false);
+  assert.equal(isEphemeralInstall("C:\\Program Files\\nodejs\\node_modules\\dotme-ai\\dist\\server\\index.js"), false);
   assert.equal(isEphemeralInstall("/Users/x/dev/dotme/dist/server/index.js"), false);
 });
 
