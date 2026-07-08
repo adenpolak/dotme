@@ -45,7 +45,7 @@ export const TOOLS = [
 export type Tool = (typeof TOOLS)[number];
 
 /** True if a path lives inside npx's throwaway package cache. */
-function isEphemeralInstall(p: string): boolean {
+export function isEphemeralInstall(p: string): boolean {
   return p.includes(`${path.sep}_npx${path.sep}`);
 }
 
@@ -559,4 +559,174 @@ export function connect(args: string[]): void {
   }
   warnIfEphemeral();
   REGISTRY[target as Tool].connect();
+}
+
+/* ------------------------------------------------------------------ */
+/* Diagnostics (used by `dotme doctor`)                                 */
+/* ------------------------------------------------------------------ */
+
+export interface ConnDiagnosis {
+  tool: Tool;
+  label: string;
+  /** Detected as installed on this machine. */
+  detected: boolean;
+  /** Config file path, or null if this tool isn't file-based / not on this OS. */
+  configPath: string | null;
+  /** Config file exists on disk. */
+  configExists: boolean;
+  /** Config parses and contains a "dotme" server entry. */
+  hasDotme: boolean;
+  /** The server script path the entry points at (last .js arg), if found. */
+  serverPath: string | null;
+  /** Whether that server path actually exists on disk (null if unknown). */
+  serverPathExists: boolean | null;
+  /** Path lives in an npx cache — exists today but npm may delete it (fragile). */
+  serverPathEphemeral: boolean;
+}
+
+/** Recursively find a `{ command, args }` object stored under a "dotme" key. */
+function deepFindDotme(node: unknown): { command?: string; args?: unknown } | null {
+  if (node === null || typeof node !== "object") return null;
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    if (
+      key === "dotme" &&
+      value !== null &&
+      typeof value === "object" &&
+      "command" in (value as object)
+    ) {
+      return value as { command?: string; args?: unknown };
+    }
+    const found = deepFindDotme(value);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** Pull the dotme server-script path (the `.js` arg) out of an args array. */
+export function serverPathFromArgs(args: unknown): string | null {
+  if (!Array.isArray(args)) return null;
+  const strings = args.filter((a): a is string => typeof a === "string");
+  return strings.find((a) => a.endsWith(".js")) ?? strings[strings.length - 1] ?? null;
+}
+
+export type ConfigFormat = "json" | "toml" | "deep-json";
+
+/** Read a config file and extract dotme's server path. Format-aware. */
+function extractDotmePath(
+  file: string,
+  format: ConfigFormat,
+  rootKeys: string[],
+): { hasDotme: boolean; serverPath: string | null } {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(file, "utf-8");
+  } catch {
+    return { hasDotme: false, serverPath: null };
+  }
+  return extractDotmeEntry(raw, format, rootKeys);
+}
+
+/**
+ * Extract dotme's server path from raw config content (no filesystem access —
+ * pure, so it's testable on any OS). Format-aware: JSON at a nested key, a deep
+ * search of a JSON blob (Claude Code), or a TOML [mcp_servers.dotme] table.
+ */
+export function extractDotmeEntry(
+  raw: string,
+  format: ConfigFormat,
+  rootKeys: string[],
+): { hasDotme: boolean; serverPath: string | null } {
+  if (format === "toml") {
+    // Find [mcp_servers.dotme] and its args = [...] line.
+    const lines = raw.split("\n");
+    let inDotme = false;
+    for (const line of lines) {
+      const header = line.match(/^\s*\[\s*([A-Za-z0-9_."'-]+)\s*\]/);
+      if (header) inDotme = header[1].trim() === "mcp_servers.dotme";
+      if (inDotme) {
+        const m = line.match(/^\s*args\s*=\s*(\[.*\])/);
+        if (m) {
+          try {
+            return { hasDotme: true, serverPath: serverPathFromArgs(JSON.parse(m[1])) };
+          } catch {
+            /* fall through */
+          }
+        }
+      }
+    }
+    return { hasDotme: /\[\s*mcp_servers\.dotme\s*\]/.test(raw), serverPath: null };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { hasDotme: false, serverPath: null };
+  }
+
+  let entry: { command?: string; args?: unknown } | null = null;
+  if (format === "deep-json") {
+    entry = deepFindDotme(parsed);
+  } else {
+    let node: unknown = parsed;
+    for (const key of rootKeys) {
+      if (node === null || typeof node !== "object") {
+        node = null;
+        break;
+      }
+      node = (node as Record<string, unknown>)[key];
+    }
+    if (node && typeof node === "object" && "dotme" in node) {
+      entry = (node as Record<string, unknown>).dotme as { command?: string; args?: unknown };
+    }
+  }
+  if (!entry) return { hasDotme: false, serverPath: null };
+  return { hasDotme: true, serverPath: serverPathFromArgs(entry.args) };
+}
+
+/** Per-tool locations + formats for reading back a written dotme entry. */
+function inspectTargets(): Array<{
+  tool: Tool;
+  path: string | null;
+  format: "json" | "toml" | "deep-json";
+  rootKeys: string[];
+}> {
+  return [
+    { tool: "claude-desktop", path: claudeDesktopConfig(), format: "json", rootKeys: ["mcpServers"] },
+    { tool: "claude-code", path: home(".claude.json"), format: "deep-json", rootKeys: [] },
+    { tool: "cursor", path: home(".cursor", "mcp.json"), format: "json", rootKeys: ["mcpServers"] },
+    { tool: "windsurf", path: home(".codeium", "windsurf", "mcp_config.json"), format: "json", rootKeys: ["mcpServers"] },
+    { tool: "zed", path: zedConfig(), format: "json", rootKeys: ["context_servers"] },
+    { tool: "vscode", path: vscodeConfig(), format: "json", rootKeys: ["servers"] },
+    { tool: "codex", path: home(".codex", "config.toml"), format: "toml", rootKeys: [] },
+    { tool: "gemini", path: home(".gemini", "settings.json"), format: "json", rootKeys: ["mcpServers"] },
+    { tool: "openclaw", path: home(".openclaw", "openclaw.json"), format: "json", rootKeys: ["mcp", "servers"] },
+  ];
+}
+
+/** Full connection diagnosis for every tool, for `dotme doctor`. */
+export function diagnoseConnections(): ConnDiagnosis[] {
+  return inspectTargets().map(({ tool, path: cfg, format, rootKeys }) => {
+    const detected = REGISTRY[tool].detect();
+    const configExists = cfg !== null && fs.existsSync(cfg);
+    let hasDotme = false;
+    let serverPath: string | null = null;
+    if (configExists && cfg) {
+      const r = extractDotmePath(cfg, format, rootKeys);
+      hasDotme = r.hasDotme;
+      serverPath = r.serverPath;
+    }
+    const serverPathExists = serverPath ? fs.existsSync(serverPath) : null;
+    return {
+      tool,
+      label: REGISTRY[tool].label,
+      detected,
+      configPath: cfg,
+      configExists,
+      hasDotme,
+      serverPath,
+      serverPathExists,
+      serverPathEphemeral: serverPath ? isEphemeralInstall(serverPath) : false,
+    };
+  });
 }

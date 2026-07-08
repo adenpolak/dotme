@@ -182,6 +182,24 @@ Any tool that speaks MCP over local stdio can connect — use `dotme connect man
 
 **Roadmap:** permissions UI · sync across machines · remote-server bridge (for ChatGPT-style clients).
 
+## Troubleshooting
+
+A connected tool doesn't see dotme? Run:
+
+```bash
+dotme doctor
+```
+
+It prints a diagnostic block — dotme/node/OS versions, whether `~/.me` and its manifest are healthy, which tools are detected, whether each tool's config points at a server file that **actually exists** (this catches the most common failure, a config left pointing at a deleted `npx` cache path), and a live check that the MCP server starts and responds. It contains only file names and booleans — **never the contents of your `~/.me` files** — so it's safe to paste.
+
+If `doctor` flags a stale or fragile path, the usual fix is:
+
+```bash
+npm install -g dotme-ai && dotme connect all
+```
+
+Still stuck? [Open an issue](https://github.com/adenpolak/dotme/issues/new/choose) and paste your `dotme doctor` output.
+
 ## Development
 
 ```bash

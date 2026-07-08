@@ -3,6 +3,7 @@
 
 import { copyToClipboard, clipboardHint } from "./clipboard.js";
 import { connect } from "./connect.js";
+import { doctor } from "./doctor.js";
 import { init } from "./init.js";
 import {
   VERSION,
@@ -30,6 +31,7 @@ Usage:
   dotme export [section...]         Print exposed context as one paste-ready block
                                     (--copy to clipboard, --compact to save tokens)
   dotme changelog [-n N]            Audit log of every write (default last 20)
+  dotme doctor                      Diagnostics for bug reports (no personal content)
   dotme serve                       Run the MCP server on stdio (used by AI tools)
   dotme help                        This help
 
@@ -147,6 +149,9 @@ async function main(): Promise<void> {
       break;
     case "export":
       exportCmd(args);
+      break;
+    case "doctor":
+      doctor();
       break;
     case "changelog":
       changelog(args);
