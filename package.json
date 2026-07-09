@@ -1,6 +1,6 @@
 {
   "name": "dotme-ai",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Your personal context layer for AI tools. One ~/.me folder you own, served to every AI through a local MCP server.",
   "keywords": [
     "mcp",

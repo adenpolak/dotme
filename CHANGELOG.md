@@ -4,6 +4,44 @@ All notable changes to dotme are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and dotme adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+_Next up (0.3.1 / 0.4): fixes and tool additions from launch feedback — see FEEDBACK.md._
+
+## [0.3.0] — 2026-07-08
+
+The "works everywhere, paste anywhere, debuggable" release. No breaking changes;
+the `~/.me` format is unchanged.
+
+### Added
+- **`dotme export [section...]`** — print your exposed context as one paste-ready
+  markdown block for tools without MCP (ChatGPT, Gemini web, anything). `--copy`
+  puts it on the clipboard (pbcopy / clip / wl-copy / xclip / xsel, with a
+  graceful fall back to printing), `--compact` strips headers and blank lines for
+  token economy. Same privacy rules as the server: `private.md` is never included.
+- **`dotme doctor`** — a copy-pasteable diagnostic block for bug reports:
+  dotme/node/OS versions, `~/.me` health (exists, manifest validity, section file
+  list), tool detection, and whether each tool's config points at a server file
+  that actually exists — flagging **stale** paths (deleted) and **fragile** paths
+  (npx cache npm may delete), then a live MCP server dry run. File names and
+  booleans only — never the contents of any `~/.me` file.
+- **Windows and Linux support.** Per-OS config paths for Claude Desktop
+  (`%APPDATA%` on Windows; no Linux build exists), VS Code, and Zed (`%APPDATA%`
+  on Windows); every other tool was already home-relative or CLI-based. Verified
+  against each tool's official docs.
+- **Continuous integration** on macOS, Ubuntu, and Windows across Node 20 and 22.
+
+### Changed
+- `dotme connect chatgpt` now leads with the safe workaround (`dotme export
+  --copy`, then paste) and documents the advanced supergateway + tunnel bridge
+  honestly, spelling out that it publishes unauthenticated personal context to
+  the internet.
+
+### Fixed
+- `isEphemeralInstall` (fragile-path detection) now matches the `_npx` segment
+  with either path separator, so it's correct on Windows regardless of slash
+  style.
+
 ## [0.2.2] — 2026-07-05
 
 ### Fixed
