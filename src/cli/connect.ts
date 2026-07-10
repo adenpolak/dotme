@@ -38,6 +38,8 @@ export const TOOLS = [
   "windsurf",
   "zed",
   "vscode",
+  "cline",
+  "roo",
   "codex",
   "gemini",
   "openclaw",
@@ -161,15 +163,45 @@ export function claudeDesktopConfig(): string | null {
   return null;
 }
 
-/** VS Code user-level MCP config path (mcp.json) for the current OS. */
-export function vscodeConfig(): string {
+/** VS Code's `User` config directory for the current OS. */
+export function vscodeUserDir(): string {
   if (process.platform === "darwin") {
-    return home("Library", "Application Support", "Code", "User", "mcp.json");
+    return home("Library", "Application Support", "Code", "User");
   }
   if (process.platform === "win32") {
-    return path.join(winAppData(), "Code", "User", "mcp.json");
+    return path.join(winAppData(), "Code", "User");
   }
-  return home(".config", "Code", "User", "mcp.json");
+  return home(".config", "Code", "User");
+}
+
+/** VS Code user-level MCP config path (mcp.json) for the current OS. */
+export function vscodeConfig(): string {
+  return path.join(vscodeUserDir(), "mcp.json");
+}
+
+/**
+ * Cline and Roo Code are VS Code extensions that keep their own MCP settings
+ * file under the editor's `globalStorage`. Both use an `mcpServers` map, same
+ * shape as Cursor/Windsurf. Paths verified against each project's docs (2026).
+ */
+export function clineConfig(): string {
+  return path.join(
+    vscodeUserDir(),
+    "globalStorage",
+    "saoudrizwan.claude-dev",
+    "settings",
+    "cline_mcp_settings.json",
+  );
+}
+
+export function rooConfig(): string {
+  return path.join(
+    vscodeUserDir(),
+    "globalStorage",
+    "rooveterinaryinc.roo-cline",
+    "settings",
+    "mcp_settings.json",
+  );
 }
 
 /** Zed settings.json path for the current OS (mac/Linux use ~/.config/zed). */
@@ -315,6 +347,20 @@ function connectVSCode(): void {
   const { command, args } = serverCommand();
   if (mergeJsonConfig(file, ["servers"], { type: "stdio", command, args }, "VS Code")) {
     info('VS Code: run "MCP: List Servers" and start dotme, or just reload the window.');
+  }
+}
+
+function connectCline(): void {
+  const { command, args } = serverCommand();
+  if (mergeJsonConfig(clineConfig(), ["mcpServers"], { command, args }, "Cline")) {
+    info("Cline: reopen the MCP Servers panel (or reload VS Code) to pick it up.");
+  }
+}
+
+function connectRoo(): void {
+  const { command, args } = serverCommand();
+  if (mergeJsonConfig(rooConfig(), ["mcpServers"], { command, args }, "Roo Code")) {
+    info("Roo Code: reopen the MCP panel (or reload VS Code) to pick it up.");
   }
 }
 
@@ -473,6 +519,17 @@ const REGISTRY: Record<Tool, ToolDef> = {
       fs.existsSync(path.dirname(path.dirname(vscodeConfig()))) ||
       commandExists("code"),
     connect: connectVSCode,
+  },
+  cline: {
+    label: "Cline",
+    // The extension's globalStorage folder exists once Cline has run.
+    detect: () => fs.existsSync(path.dirname(path.dirname(clineConfig()))),
+    connect: connectCline,
+  },
+  roo: {
+    label: "Roo Code",
+    detect: () => fs.existsSync(path.dirname(path.dirname(rooConfig()))),
+    connect: connectRoo,
   },
   codex: {
     label: "Codex CLI",
@@ -703,6 +760,8 @@ function inspectTargets(): Array<{
     { tool: "windsurf", path: home(".codeium", "windsurf", "mcp_config.json"), format: "json", rootKeys: ["mcpServers"] },
     { tool: "zed", path: zedConfig(), format: "json", rootKeys: ["context_servers"] },
     { tool: "vscode", path: vscodeConfig(), format: "json", rootKeys: ["servers"] },
+    { tool: "cline", path: clineConfig(), format: "json", rootKeys: ["mcpServers"] },
+    { tool: "roo", path: rooConfig(), format: "json", rootKeys: ["mcpServers"] },
     { tool: "codex", path: home(".codex", "config.toml"), format: "toml", rootKeys: [] },
     { tool: "gemini", path: home(".gemini", "settings.json"), format: "json", rootKeys: ["mcpServers"] },
     { tool: "openclaw", path: home(".openclaw", "openclaw.json"), format: "json", rootKeys: ["mcp", "servers"] },

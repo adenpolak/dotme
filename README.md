@@ -66,9 +66,14 @@ Each exposed file is also available as a browsable MCP resource (`me://profile`,
 | Windsurf | ✅ | `~/.codeium/windsurf/mcp_config.json` → `mcpServers` |
 | Zed | ✅ | `~/.config/zed/settings.json` → `context_servers` (with `"source": "custom"`) |
 | VS Code (Copilot) | ✅ | `~/Library/Application Support/Code/User/mcp.json` → `servers` (with `"type": "stdio"`) |
+| Cline | ✅ | VS Code `globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` → `mcpServers` |
+| Roo Code | ✅ | VS Code `globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json` → `mcpServers` |
 | Codex CLI | ✅ | `codex mcp add`, or `[mcp_servers.dotme]` in `~/.codex/config.toml` |
 | Gemini CLI | ✅ | `~/.gemini/settings.json` → `mcpServers` |
 | OpenClaw | ✅ | `openclaw mcp add`, or `mcp.servers` in `~/.openclaw/openclaw.json` |
+| Continue.dev | ⚠️ manual | Uses YAML (`~/.continue/config.yaml`) which we won't rewrite blindly — see [manual clients](#manual-clients-continue-jetbrains-warp) |
+| JetBrains AI Assistant | ⚠️ manual | Configured in the IDE UI (Settings → Tools → AI Assistant → MCP) — see [manual clients](#manual-clients-continue-jetbrains-warp) |
+| Warp | ⚠️ manual | Configured in Warp Drive → MCP Servers → + Add — see [manual clients](#manual-clients-continue-jetbrains-warp) |
 | ChatGPT | ⚠️ paste | Connectors are **remote-only** (SSE/HTTP) — can't launch a local stdio server. Use `dotme export --copy` and paste (see [ChatGPT & no-MCP tools](#chatgpt--tools-without-mcp)). |
 | Anything else that speaks MCP | ✅ | `dotme connect manual` prints a paste-ready snippet |
 
@@ -119,6 +124,25 @@ Run `dotme connect manual` for a snippet with your machine's real paths filled i
 ```
 
 The top-level key varies by client (`mcpServers` for most, `servers` in VS Code, `context_servers` in Zed); TOML-based clients like Codex CLI use `[mcp_servers.dotme]`.
+
+### Manual clients (Continue, JetBrains, Warp)
+
+These support local stdio MCP servers but don't expose a config file dotme can safely write (YAML we won't merge blindly, or UI-only setup), so add dotme by hand once. Get your exact command + args from `dotme connect manual`, then:
+
+- **Continue.dev** — add a global server to `~/.continue/config.yaml`:
+
+  ```yaml
+  mcpServers:
+    - name: dotme
+      type: stdio
+      command: node
+      args:
+        - /path/to/dotme-ai/dist/server/index.js
+  ```
+
+- **JetBrains AI Assistant** — Settings → Tools → AI Assistant → Model Context Protocol (MCP) → add a server, paste the command and args (or use the IDE's "Copy Stdio Config").
+
+- **Warp** — Warp Drive → MCP Servers → + Add, paste the `{ "dotme": { "command": …, "args": [ … ] } }` block, then Start.
 
 ## Sync between machines
 

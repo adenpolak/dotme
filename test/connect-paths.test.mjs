@@ -14,7 +14,14 @@ import assert from "node:assert/strict";
 import * as os from "node:os";
 import * as path from "node:path";
 import { after, test } from "node:test";
-import { claudeDesktopConfig, vscodeConfig, zedConfig } from "../dist/cli/connect.js";
+import {
+  claudeDesktopConfig,
+  clineConfig,
+  rooConfig,
+  vscodeConfig,
+  vscodeUserDir,
+  zedConfig,
+} from "../dist/cli/connect.js";
 
 const realPlatform = process.platform;
 const realAppData = process.env.APPDATA;
@@ -68,5 +75,28 @@ test("Linux: VS Code + Zed under ~/.config; Claude Desktop unavailable", () => {
     assert.equal(claudeDesktopConfig(), null, "Claude Desktop has no Linux build");
     assert.equal(vscodeConfig(), path.join(H, ".config", "Code", "User", "mcp.json"));
     assert.equal(zedConfig(), path.join(H, ".config", "zed", "settings.json"));
+  });
+});
+
+test("Cline + Roo live under VS Code globalStorage on every OS", () => {
+  const cline = (base) =>
+    path.join(base, "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json");
+  const roo = (base) =>
+    path.join(base, "globalStorage", "rooveterinaryinc.roo-cline", "settings", "mcp_settings.json");
+
+  withPlatform("darwin", undefined, () => {
+    assert.equal(clineConfig(), cline(vscodeUserDir()));
+    assert.equal(rooConfig(), roo(vscodeUserDir()));
+    assert.ok(vscodeUserDir().endsWith(path.join("Code", "User")));
+  });
+  withPlatform("win32", path.join(H, "AppData", "Roaming"), () => {
+    assert.equal(clineConfig(), cline(vscodeUserDir()));
+    assert.equal(rooConfig(), roo(vscodeUserDir()));
+    assert.ok(vscodeUserDir().startsWith(path.join(H, "AppData", "Roaming")));
+  });
+  withPlatform("linux", undefined, () => {
+    assert.equal(clineConfig(), cline(vscodeUserDir()));
+    assert.equal(rooConfig(), roo(vscodeUserDir()));
+    assert.equal(vscodeUserDir(), path.join(H, ".config", "Code", "User"));
   });
 });
