@@ -6,7 +6,26 @@ All notable changes to dotme are documented here. The format follows
 
 ## [Unreleased]
 
-_Next up (0.3.1 / 0.4): fixes and tool additions from launch feedback — see FEEDBACK.md._
+_Next up (0.4.1 / 0.5): fixes and tool additions from launch feedback — see FEEDBACK.md._
+
+## [0.4.0] — 2026-07-10
+
+More clients, and a home on the web. No breaking changes; the `~/.me` format is
+unchanged.
+
+### Added
+- **Cline and Roo Code connectors.** Both keep their MCP settings as JSON under
+  VS Code's `globalStorage` (`saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+  and `rooveterinaryinc.roo-cline/settings/mcp_settings.json`) with an
+  `mcpServers` key — full auto-connect with the usual timestamped backup and
+  merge-never-overwrite, per-OS paths, `connect all` detection, and `dotme
+  doctor` coverage. Verified against each project's docs.
+- **Documented manual setup for Continue.dev, JetBrains AI Assistant, and Warp.**
+  These support local stdio MCP but expose no config file dotme can safely write
+  (YAML we won't merge blindly, or UI-only setup), so the README gives exact
+  by-hand steps rather than a faked integration.
+- **Landing page** at [adenpolak.github.io/dotme](https://adenpolak.github.io/dotme/)
+  — hand-rolled, dependency-free, served from `docs/` via GitHub Pages.
 
 ## [0.3.0] — 2026-07-08
 
