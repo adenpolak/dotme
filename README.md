@@ -5,6 +5,8 @@
 [![license: MIT](https://img.shields.io/npm/l/dotme-ai.svg)](https://github.com/adenpolak/dotme/blob/main/LICENSE)
 [![node: >=20](https://img.shields.io/node/v/dotme-ai.svg)](https://nodejs.org)
 
+**Website: [adenpolak.github.io/dotme](https://adenpolak.github.io/dotme/)**
+
 ```bash
 npx dotme-ai init          # describe yourself once (~3 min, every question skippable)
 npx dotme-ai connect all   # auto-detects your AI tools and hooks up every one
